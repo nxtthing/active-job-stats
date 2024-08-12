@@ -61,13 +61,9 @@ module ActiveJobStats
         keys.compact_blank.join("-")
       end
 
-      protected
-
       def job_key(_job)
         nil
       end
-
-      private
 
       def perform_state_key(postfix)
         "active_job_perform_state_#{name}_#{postfix}"
