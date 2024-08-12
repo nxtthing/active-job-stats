@@ -4,13 +4,15 @@ module ActiveJobStats
   module QueueAndPerformState
     extend ActiveSupport::Concern
 
+    QUEUED_STATE = "queued".freeze
+
     included do
       after_enqueue do |job|
         RedisConnection.with do |conn|
           conn.setex(
             self.class.perform_state_job_key(job),
             self.class.job_stats_expiration_time,
-            "queued"
+            QUEUED_STATE
           )
         end
       end
@@ -33,6 +35,14 @@ module ActiveJobStats
     class_methods do
       def any_queued_or_performing?(job_key = nil)
         RedisConnection.with { |conn| conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"]))) }.any?
+      end
+
+      def any_queued?(job_key = nil)
+        RedisConnection.with do |conn|
+          conn.mget(*conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))).any? do |status|
+            status == QUEUED_STATE
+          end
+        end
       end
 
       def perform_later_if_uniq(*params)
