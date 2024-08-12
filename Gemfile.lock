@@ -1,0 +1,52 @@
+GIT
+  remote: https://github.com/nxtthing/redis-connection
+  revision: 3cf9c059fd57ddda93d151362849fe799f64b6ba
+  specs:
+    redis_connection (0.0.1)
+      redis
+
+PATH
+  remote: .
+  specs:
+    active_job_stats (0.0.1)
+      activesupport
+      redis_connection
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (7.1.3.4)
+      base64
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      mutex_m
+      tzinfo (~> 2.0)
+    base64 (0.2.0)
+    bigdecimal (3.1.8)
+    concurrent-ruby (1.3.4)
+    connection_pool (2.4.1)
+    drb (2.2.1)
+    i18n (1.14.5)
+      concurrent-ruby (~> 1.0)
+    minitest (5.24.1)
+    mutex_m (0.2.0)
+    redis (5.2.0)
+      redis-client (>= 0.22.0)
+    redis-client (0.22.2)
+      connection_pool
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+
+PLATFORMS
+  arm64-darwin-21
+
+DEPENDENCIES
+  active_job_stats!
+  redis_connection!
+
+BUNDLED WITH
+   2.4.6
