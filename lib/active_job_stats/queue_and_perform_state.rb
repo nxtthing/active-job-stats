@@ -57,6 +57,10 @@ module ActiveJobStats
         @job_stats_expiration_time || 20.minutes
       end
 
+      def combine_perform_state_keys(keys)
+        keys.compact_blank.join("-")
+      end
+
       protected
 
       def job_key(_job)
@@ -67,10 +71,6 @@ module ActiveJobStats
 
       def perform_state_key(postfix)
         "active_job_perform_state_#{name}_#{postfix}"
-      end
-
-      def combine_perform_state_keys(keys)
-        keys.compact_blank.join("-")
       end
     end
 
