@@ -49,11 +49,15 @@ module ActiveJobStats
         perform_later(*params) unless any_queued_or_performing?(job_key(OpenStruct.new(arguments: ::Array.wrap(params))))
       end
 
-      protected
+      def perform_state_job_key(job)
+        perform_state_key(combine_perform_state_keys([job_key(job), job.job_id]))
+      end
 
       def job_stats_expiration_time
         @job_stats_expiration_time || 20.minutes
       end
+
+      protected
 
       def job_key(_job)
         nil
@@ -63,10 +67,6 @@ module ActiveJobStats
 
       def perform_state_key(postfix)
         "active_job_perform_state_#{name}_#{postfix}"
-      end
-
-      def perform_state_job_key(job)
-        perform_state_key(combine_perform_state_keys([job_key(job), job.job_id]))
       end
 
       def combine_perform_state_keys(keys)
