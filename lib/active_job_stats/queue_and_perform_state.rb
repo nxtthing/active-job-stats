@@ -49,6 +49,10 @@ module ActiveJobStats
         perform_later(*params) unless any_queued_or_performing?(job_key(OpenStruct.new(arguments: ::Array.wrap(params))))
       end
 
+      def perform_later_if_not_queued(*params)
+        perform_later(*params) unless any_queued?(job_key(OpenStruct.new(arguments: ::Array.wrap(params))))
+      end
+
       def perform_state_job_key(job)
         perform_state_key(combine_perform_state_keys([job_key(job), job.job_id]))
       end
