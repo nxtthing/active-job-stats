@@ -39,7 +39,8 @@ module ActiveJobStats
 
       def any_queued?(job_key = nil)
         RedisConnection.with do |conn|
-          conn.mget(*conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))).any? do |status|
+          keys = conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))
+          keys.present? && conn.mget(*keys).any? do |status|
             status == QUEUED_STATE
           end
         end
