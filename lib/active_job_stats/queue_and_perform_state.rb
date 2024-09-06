@@ -1,4 +1,5 @@
 require "ostruct"
+require "active_job_stats/queue_and_perform_configured_job"
 
 module ActiveJobStats
   module QueueAndPerformState
@@ -33,6 +34,10 @@ module ActiveJobStats
     end
 
     class_methods do
+      def set(options = {})
+        super.extend(ActiveJobStats::QueueAndPerformConfiguredJob)
+      end
+
       def any_queued_or_performing?(job_key = nil)
         RedisConnection.with { |conn| conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"]))) }.any?
       end
@@ -47,11 +52,13 @@ module ActiveJobStats
       end
 
       def perform_later_if_uniq(*params)
-        perform_later(*params) unless any_queued_or_performing?(job_key(OpenStruct.new(arguments: ::Array.wrap(params))))
+        job_key = job_key(OpenStruct.new(arguments: ::Array.wrap(params)))
+        perform_later(*params) unless any_queued_or_performing?(job_key)
       end
 
       def perform_later_if_not_queued(*params)
-        perform_later(*params) unless any_queued?(job_key(OpenStruct.new(arguments: ::Array.wrap(params))))
+        job_key = job_key(OpenStruct.new(arguments: ::Array.wrap(params)))
+        perform_later(*params) unless any_queued?(job_key)
       end
 
       def perform_state_job_key(job)
