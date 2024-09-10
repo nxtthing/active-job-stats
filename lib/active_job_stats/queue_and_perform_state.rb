@@ -51,12 +51,12 @@ module ActiveJobStats
         end
       end
 
-      def perform_later_if_uniq(*)
-        perform_later(*) unless any_queued_or_performing?(job_key(*))
+      def perform_later_if_uniq(*, **)
+        perform_later(*, **) unless any_queued_or_performing?(job_key(*, **))
       end
 
-      def perform_later_if_not_queued(*)
-        perform_later(*) unless any_queued?(job_key(*))
+      def perform_later_if_not_queued(*, **)
+        perform_later(*, **) unless any_queued?(job_key(*, **))
       end
 
       def perform_state_job_key(job)
@@ -71,7 +71,7 @@ module ActiveJobStats
         keys.compact_blank.join("-")
       end
 
-      def job_key(*)
+      def job_key(*, **)
         nil
       end
 
