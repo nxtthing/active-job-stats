@@ -51,18 +51,16 @@ module ActiveJobStats
         end
       end
 
-      def perform_later_if_uniq(*params)
-        job_key = job_key(OpenStruct.new(arguments: ::Array.wrap(params)))
-        perform_later(*params) unless any_queued_or_performing?(job_key)
+      def perform_later_if_uniq(*)
+        perform_later(*) unless any_queued_or_performing?(job_key(*))
       end
 
-      def perform_later_if_not_queued(*params)
-        job_key = job_key(OpenStruct.new(arguments: ::Array.wrap(params)))
-        perform_later(*params) unless any_queued?(job_key)
+      def perform_later_if_not_queued(*)
+        perform_later(*) unless any_queued?(job_key(*))
       end
 
       def perform_state_job_key(job)
-        perform_state_key(combine_perform_state_keys([job_key(job), job.job_id]))
+        perform_state_key(combine_perform_state_keys([job_key(*job.arguments), job.job_id]))
       end
 
       def job_stats_expiration_time
@@ -73,7 +71,7 @@ module ActiveJobStats
         keys.compact_blank.join("-")
       end
 
-      def job_key(_job)
+      def job_key(*)
         nil
       end
 
