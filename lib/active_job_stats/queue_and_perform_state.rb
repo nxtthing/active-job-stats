@@ -39,14 +39,24 @@ module ActiveJobStats
       end
 
       def any_queued_or_performing?(job_key = nil)
-        RedisConnection.with { |conn| conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"]))) }.any?
+        RedisConnection.with do |conn|
+          if job_key_in_perform_state_key?
+            conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"]))).any?
+          else
+            !conn.get(perform_state_key(job_key)).nil?
+          end
+        end
       end
 
       def any_queued?(job_key = nil)
         RedisConnection.with do |conn|
-          keys = conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))
-          keys.present? && conn.mget(*keys).any? do |status|
-            status == QUEUED_STATE
+          if job_key_in_perform_state_key?
+            keys = conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))
+            keys.present? && conn.mget(*keys).any? do |status|
+              status == QUEUED_STATE
+            end
+          else
+            conn.get(perform_state_key(job_key)) == QUEUED_STATE
           end
         end
       end
@@ -60,7 +70,9 @@ module ActiveJobStats
       end
 
       def perform_state_job_key(job)
-        perform_state_key(combine_perform_state_keys([job_key(*job.arguments), job.job_id]))
+        key = job_key(*job.arguments)
+        key = combine_perform_state_keys([key, job.job_id]) if job_key_in_perform_state_key?
+        perform_state_key(key)
       end
 
       def job_stats_expiration_time
@@ -86,6 +98,12 @@ module ActiveJobStats
         RedisConnection.with { |conn| conn.keys(k.perform_state_key(k.combine_perform_state_keys([job_key, "*"]))) } -
           [k.perform_state_key(job_id)]
       ).any?
+    end
+
+    private
+
+    def job_key_in_perform_state_key?
+      @job_key_in_perform_state_key || true
     end
   end
 end
