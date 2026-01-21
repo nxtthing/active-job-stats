@@ -76,7 +76,7 @@ module ActiveJobStats
       end
 
       def job_stats_expiration_time
-        20.minutes
+        @job_stats_expiration_time || 20.minutes
       end
 
       def combine_perform_state_keys(keys)
@@ -100,18 +100,10 @@ module ActiveJobStats
       ).any?
     end
 
-    def set_job_stats_expiration_time(value)
-      define_method(:job_stats_expiration_time) { value }
-    end
-
-    def ignore_job_key_in_perform_state_key!
-      define_singleton_method(:job_key_in_perform_state_key?) { false }
-    end
-
     private
 
     def job_key_in_perform_state_key?
-      true
+      @job_key_in_perform_state_key || true
     end
   end
 end
