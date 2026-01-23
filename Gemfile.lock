@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    active_job_stats (0.0.11)
+    active_job_stats (0.0.14)
       activesupport
       redis_connection
 

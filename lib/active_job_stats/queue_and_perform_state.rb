@@ -90,6 +90,10 @@ module ActiveJobStats
       def perform_state_key(postfix)
         "active_job_perform_state_#{name}_#{postfix}"
       end
+
+      def job_key_in_perform_state_key?
+        true
+      end
     end
 
     def any_queued_or_performing?(job_key = nil)
@@ -98,12 +102,6 @@ module ActiveJobStats
         RedisConnection.with { |conn| conn.keys(k.perform_state_key(k.combine_perform_state_keys([job_key, "*"]))) } -
           [k.perform_state_key(job_id)]
       ).any?
-    end
-
-    private
-
-    def job_key_in_perform_state_key?
-      @job_key_in_perform_state_key || true
     end
   end
 end
