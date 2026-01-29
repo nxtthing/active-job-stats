@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    active_job_stats (0.0.15)
+    active_job_stats (1.0.0)
       activesupport
       redis_connection
 
@@ -43,6 +43,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  arm64-darwin-25
 
 DEPENDENCIES
   active_job_stats!
