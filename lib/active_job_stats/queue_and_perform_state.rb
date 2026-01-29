@@ -8,7 +8,7 @@ module ActiveJobStats
     QUEUED_STATE = "queued".freeze
 
     included do
-      after_enqueue do |job|
+      before_enqueue do |job|
         RedisConnection.with do |conn|
           conn.setex(
             self.class.perform_state_job_key(job),
