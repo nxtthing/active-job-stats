@@ -1,5 +1,6 @@
 require "ostruct"
 require "active_job_stats/queue_and_perform_configured_job"
+require "active_job_stats/state_tracker"
 
 module ActiveJobStats
   module QueueAndPerformState
@@ -8,100 +9,56 @@ module ActiveJobStats
     QUEUED_STATE = "queued".freeze
 
     included do
-      before_enqueue do |job|
-        RedisConnection.with do |conn|
-          conn.setex(
-            self.class.perform_state_job_key(job),
-            self.class.job_stats_expiration_time,
-            QUEUED_STATE
-          )
-        end
-      end
-
-      before_perform do |job|
-        RedisConnection.with do |conn|
-          conn.setex(
-            self.class.perform_state_job_key(job),
-            self.class.job_stats_expiration_time,
-            "performing"
-          )
-        end
-      end
-
-      after_perform do |job|
-        RedisConnection.with { |conn| conn.del(self.class.perform_state_job_key(job)) }
-      end
+      class_attribute :ajs_state_tracker, instance_accessor: false
     end
 
     class_methods do
+      def track_state(args_to_key: -> { nil }, expire_in: 20.minutes, join_concurrent_jobs: false)
+        state_tracker = StateTracker.new(
+          args_to_key:,
+          join_concurrent_jobs:,
+          class_name: self.name,
+          expire_in_ms: expire_in.to_i
+        )
+
+        before_enqueue do |job|
+          state_tracker.track_state(job:, state: QUEUED_STATE)
+        end
+
+        before_perform do |job|
+          state_tracker.track_state(job:, state: "performing")
+        end
+
+        after_perform do |job|
+          state_tracker.remove_state(job:)
+        end
+
+        self.ajs_state_tracker = state_tracker
+      end
+
       def set(options = {})
         super.extend(ActiveJobStats::QueueAndPerformConfiguredJob)
       end
 
-      def any_queued_or_performing?(job_key = nil)
-        RedisConnection.with do |conn|
-          if job_key_in_perform_state_key?
-            conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"]))).any?
-          else
-            !conn.get(perform_state_key(job_key)).nil?
-          end
-        end
-      end
-
-      def any_queued?(job_key = nil)
-        RedisConnection.with do |conn|
-          if job_key_in_perform_state_key?
-            keys = conn.keys(perform_state_key(combine_perform_state_keys([job_key, "*"])))
-            keys.present? && conn.mget(*keys).any? do |status|
-              status == QUEUED_STATE
-            end
-          else
-            conn.get(perform_state_key(job_key)) == QUEUED_STATE
-          end
-        end
-      end
-
       def perform_later_if_uniq(*, **)
-        perform_later(*, **) unless any_queued_or_performing?(job_key(*, **))
+        perform_later(*, **) unless any_queued_or_performing?(*, **)
       end
 
       def perform_later_if_not_queued(*, **)
-        perform_later(*, **) unless any_queued?(job_key(*, **))
+        perform_later(*, **) unless any_queued?(*, **)
       end
 
-      def perform_state_job_key(job)
-        key = job_key(*job.arguments)
-        key = combine_perform_state_keys([key, job.job_id]) if job_key_in_perform_state_key?
-        perform_state_key(key)
+      def any_queued_or_performing?(*, **)
+        self.ajs_state_tracker.any?(*, **)
       end
 
-      def job_stats_expiration_time
-        @job_stats_expiration_time || 20.minutes
-      end
-
-      def combine_perform_state_keys(keys)
-        keys.compact_blank.join("-")
-      end
-
-      def job_key(*, **)
-        nil
-      end
-
-      def perform_state_key(postfix)
-        "active_job_perform_state_#{name}_#{postfix}"
-      end
-
-      def job_key_in_perform_state_key?
-        true
+      def any_queued?(*args, **kwargs)
+        self.ajs_state_tracker.any?(*args, states: [QUEUED_STATE], **kwargs)
       end
     end
 
-    def any_queued_or_performing?(job_key = nil)
-      k = self.class
-      (
-        RedisConnection.with { |conn| conn.keys(k.perform_state_key(k.combine_perform_state_keys([job_key, "*"]))) } -
-          [k.perform_state_key(job_id)]
-      ).any?
+    def any_queued_or_performing?(*args, **kwargs)
+      self.class.ajs_state_tracker.any?(*args, ignore_job_id: job_id, **kwargs)
     end
   end
 end
