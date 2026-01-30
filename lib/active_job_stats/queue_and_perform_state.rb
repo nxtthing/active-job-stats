@@ -13,7 +13,7 @@ module ActiveJobStats
     end
 
     class_methods do
-      def track_state(args_to_key: -> { nil }, expire_in: 20.minutes, join_concurrent_jobs: false)
+      def track_state(args_to_key: -> (*, **){ nil }, expire_in: 20.minutes, join_concurrent_jobs: false)
         state_tracker = StateTracker.new(
           args_to_key:,
           join_concurrent_jobs:,

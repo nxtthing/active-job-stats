@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = "active_job_stats"
   s.summary     = "ActiveJobStats"
-  s.version     = "1.0.0"
+  s.version     = "1.0.1"
   s.authors     = ["Aliaksandr Yakubenka"]
   s.email       = "alexandr.yakubenko@startdatelabs.com"
   s.files       = ["lib/active_job_stats.rb"]
